@@ -1,8 +1,3 @@
-/*
-  TCP_Server. This Program will will create the Server side for TCP_Socket Programming.
-  It will receive the data from the client and then send the same data back to client.
-*/
-
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h> //socket
@@ -11,10 +6,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-pthread_t threads[5];
-
 //number of client currently connected using the threads
 int clientCount = 0;
+pthread_t threads[5];
 
 int voterCount = 0;
 char voters[50][50];
@@ -25,7 +19,7 @@ int initialiseVoters(){
   if (voterFile == NULL)
   {
     printf("Voters List file not found!\n");
-    return 0;
+    return -1;
   }
 
   for (int i = 0; i < 50; i++)
@@ -62,7 +56,7 @@ int initialiseCandidatesList(){
   if (candidateFile == NULL)
   {
     printf("Voters List file not found!\n");
-    return 0;
+    return -1;
   }
 
   for (int i = 0; i < 50; i++)
@@ -89,7 +83,6 @@ void displayCandidates(){
     printf(candidates[i]);
   }
 }
-
 
 char symbols[50][50];
 
@@ -178,10 +171,9 @@ void *server_thread (void *args)
     }
   }
 
-  //Deciding which message to send to client
-
   memset(server_message,'\0',sizeof(server_message));
 
+  //Deciding which message to send to client
   if (foundFlag == 1)
   {
     strcpy(server_message, "Enter Voter Details!");
@@ -197,7 +189,7 @@ void *server_thread (void *args)
     return -1;
   }
 
-  //if client found then take symbol from them
+  //if client was found, then receive candidate symbol from them
   if (foundFlag == 1)
   {
     if (recv(newSocket, client_symbol, sizeof(client_symbol),0) < 0)
@@ -261,127 +253,127 @@ void *server_thread (void *args)
   return NULL;
 }
 
+
 int main(void)
 {
-      if(initialiseVoters() == 0)
-      {
-        return -1;
-      }
+  if(initialiseVoters() == -1)
+  {
+    return -1;
+  }
 
-      if (initialiseCandidatesList() == 0)
-      {
-        return -1;
-      }
+  if (initialiseCandidatesList() == -1)
+  {
+    return -2;
+  }
 
-      initialiseSymbols();
+  initialiseSymbols();
 
-        int socket_desc, client_sock, client_size;
-        struct sockaddr_in server_addr, client_addr;         //SERVER ADDR will have all the server address
-        char server_message[2000], client_details[2000], client_symbol[2000];                 // Sending values from the server and receive from the server we need this
+  int socket_desc, client_sock, client_size;
+  struct sockaddr_in server_addr, client_addr;         //SERVER ADDR will have all the server address
+  char server_message[2000], client_details[2000], client_symbol[2000];                 // Sending values from the server and receive from the server we need this
 
-        //Cleaning the Buffers
-        memset(server_message,'\0',sizeof(server_message));
-        memset(client_details,'\0',sizeof(client_details));     // Set all bits of the padding field//
-        memset(client_symbol,'\0',sizeof(client_symbol));
+  //Cleaning the Buffers
+  memset(server_message,'\0',sizeof(server_message));
+  memset(client_details,'\0',sizeof(client_details));     // Set all bits of the padding field//
+  memset(client_symbol,'\0',sizeof(client_symbol));
 
-        //Creating Socket
-        socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+  //Creating Socket
+  socket_desc = socket(AF_INET, SOCK_STREAM, 0);
 
-        if(socket_desc < 0)
-        {
-          printf("Could Not Create Socket. Error!!!!!\n");
-          return -1;
-        }
+  if(socket_desc < 0)
+  {
+    printf("Could Not Create Socket. Error!!!!!\n");
+    return -3;
+  }
+  printf("Socket Created\n");
 
-        printf("Socket Created\n");
+  //Binding IP and Port to socket
 
-        //Binding IP and Port to socket
+  server_addr.sin_family = AF_INET;               /* Address family = Internet */
+  server_addr.sin_port = htons(2000);               // Set port number, using htons function to use proper byte order */
+  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");    /* Set IP address to localhost */
 
-        server_addr.sin_family = AF_INET;               /* Address family = Internet */
-        server_addr.sin_port = htons(2000);               // Set port number, using htons function to use proper byte order */
-        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");    /* Set IP address to localhost */
+  // BINDING FUNCTION
 
-    		// BINDING FUNCTION
+  if(bind(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr))<0)    // Bind the address struct to the socket.  /
+    //bind() passes file descriptor, the address structure,and the length of the address structure
+  {
+    printf("Bind Failed. Error!!!!!\n");
+    return -4;
+  }
+  printf("Bind Done\n");
 
-        if(bind(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr))<0)    // Bind the address struct to the socket.  /
-          //bind() passes file descriptor, the address structure,and the length of the address structure
-        {
-          printf("Bind Failed. Error!!!!!\n");
-          return -1;
-        }
-
-        printf("Bind Done\n");
-
-    //while loop allows us to listen for a new client connection after a client disconnects
-    while (1 == 1)
+  //while loop allows us to listen for a new client connection after a client disconnects
+  while (1 == 1)
+  {
+    //Put the socket into Listening State
+    if(listen(socket_desc, 1) < 0)                               //This listen() call tells the socket to listen to the incoming connections.
+    // The listen() function places all incoming connection into a "backlog queue" until accept() call accepts the connection.
     {
-      //Put the socket into Listening State
-      if(listen(socket_desc, 1) < 0)                               //This listen() call tells the socket to listen to the incoming connections.
-      // The listen() function places all incoming connection into a "backlog queue" until accept() call accepts the connection.
-      {
-        printf("Listening Failed. Error!!!!!\n");
-        return -1;
-      }
-
-      printf("Listening for Incoming Connections.....\n");
-
-      //Accept the incoming Connections
-
-      client_size = sizeof(client_addr);
-
-      client_sock = accept(socket_desc, (struct sockaddr*)&client_addr, &client_size);          // heree particular client k liye new socket create kr rhaa ha
-
-      if (client_sock < 0)
-      {
-        printf("Accept Failed. Error!!!!!!\n");
-        return -1;
-      }
-
-      printf("Client Connected with IP: %s and Port No: %i\n",inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
-      //inet_ntoa() function converts the Internet host address in, given in network byte order, to a string in IPv4 dotted-decimal notation
-
-      //we only allow upto 5 votees at a time
-      if(clientCount < 5)
-      {
-        if(pthread_create(&threads[clientCount], NULL, server_thread, &client_sock) != 0 )
-        {
-          printf("Failed to create thread\n");
-        }
-
-        memset(server_message,'\0',sizeof(server_message));
-        memset(client_details,'\0',sizeof(client_details));
-        memset(client_symbol,'\0',sizeof(client_symbol));
-
-        //pthread_join(threads[clientCount], NULL);
-      }
-
-      else
-      {
-        //Receive the message from the client
-
-        if (recv(client_sock, client_details, sizeof(client_details),0) < 0)
-        {
-          printf("Receive Failed. Error!!!!!\n");
-          return -1;
-        }
-
-        printf("Client Message: %s\n",client_details);
-
-        //Send the message back to client
-
-        strcpy(server_message, "Server Full!");
-
-        if (send(client_sock, server_message, strlen(server_message),0)<0)
-        {
-          printf("Send Failed. Error!!!!!\n");
-          return -1;
-        }
-
-        //Closing the Socket
-        close(client_sock);
-      }
+      printf("Listening Failed. Error!!!!!\n");
+      return -5;
     }
 
-    close(socket_desc);
-    return 0;
+    printf("Listening for Incoming Connections.....\n");
+
+    //Accept the incoming Connections
+
+    client_size = sizeof(client_addr);
+
+    client_sock = accept(socket_desc, (struct sockaddr*)&client_addr, &client_size);          // heree particular client k liye new socket create kr rhaa ha
+
+    if (client_sock < 0)
+    {
+      printf("Accept Failed. Error!!!!!!\n");
+      return -6;
+    }
+
+    printf("Client Connected with IP: %s and Port No: %i\n",inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
+    //inet_ntoa() function converts the Internet host address in, given in network byte order, to a string in IPv4 dotted-decimal notation
+
+    //we only allow upto 5 voters at a time
+    if(clientCount < 5)
+    {
+      if(pthread_create(&threads[clientCount], NULL, server_thread, &client_sock) != 0 )
+      {
+        printf("Failed to create thread\n");
+      }
+
+      memset(server_message,'\0',sizeof(server_message));
+      memset(client_details,'\0',sizeof(client_details));
+      memset(client_symbol,'\0',sizeof(client_symbol));
+
+      //pthread_join(threads[clientCount], NULL);
+    }
+
+    else
+    {
+      //Receive the message from the client
+
+      if (recv(client_sock, client_details, sizeof(client_details),0) < 0)
+      {
+        printf("Receive Failed. Error!!!!!\n");
+        return -7;
+      }
+
+      printf("Client Message: %s\n",client_details);
+
+      //Send the message back to client
+
+      strcpy(server_message, "Server Full!");
+
+      if (send(client_sock, server_message, strlen(server_message),0)<0)
+      {
+        printf("Send Failed. Error!!!!!\n");
+        return -8;
+      }
+
+      //Disconnecting client from server
+      close(client_sock);
+    }
+  }
+
+  //Closing the server socket
+  close(socket_desc);
+  return 0;
 }

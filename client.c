@@ -1,8 +1,3 @@
-/*
-        TCP_Client. This Program will implement the Client Side for TCP_Socket Programming.
-        It will get some data from user and will send to the server and as a reply from the
-        server, it will get its data back.
-*/
 
 #include <stdio.h>
 #include <string.h>
@@ -66,8 +61,8 @@ int main(void)
 
   if(socket_desc < 0)
   {
-          printf("Could Not Create Socket. Error!!!!!\n");
-          return -1;
+    printf("Could Not Create Socket. Error!!!!!\n");
+    return -1;
   }
 
   printf("Socket Created\n");
@@ -82,23 +77,21 @@ int main(void)
 
   if(connect(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
   {
-          printf("Connection Failed. Error!!!!!");
-          return -1;
+    printf("Connection Failed. Error!!!!!");
+    return -1;
   }
 
   printf("Connected\n");
 
   //Get Name and CNIC from the Client side
   printf("Enter Message: ");
-  gets(client_message); //One is that gets() will only get character string data.
-                        //will get only one variable at a time.
-                        //  reads characters from stdin and loads them into str
+  gets(client_message);
 
   //Send Client's message to the Server
   if(send(socket_desc, client_message, strlen(client_message),0) < 0)
   {
-          printf("Send Failed. Error!!!!\n");
-          return -1;
+    printf("Send Failed. Error!!!!\n");
+    return -1;
   }
 
   //Receive the server's response
@@ -125,7 +118,6 @@ int main(void)
     //Voter was found in list and had not voted
     else
     {
-
       if (strcmp(server_message, "Server Full!") == 0)
       {
         //do nothing
@@ -162,6 +154,7 @@ int main(void)
     }
   }
 
+  //clean buffers
   memset(server_message,'\0',sizeof(server_message));
   memset(client_message,'\0',sizeof(client_message));
 
