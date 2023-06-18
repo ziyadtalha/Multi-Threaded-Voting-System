@@ -115,6 +115,26 @@ void initialiseSymbols(){
   }
 }
 
+
+//records client details and candidate symbol into a file
+void vote(char* cd, char* cs)
+{
+  FILE* votes = fopen("Votes.txt", "a");
+
+  if (votes == NULL)
+  {
+    printf("Votes file could not be opened!\n");
+    return -1;
+  }
+
+  fputs(cs, votes);
+  fputs("/", votes);
+  fputs(cd, votes);
+
+  fclose(votes);
+}
+
+
 //here we build a thread function to service a client
 void *server_thread (void *args)
 {
@@ -227,6 +247,8 @@ void *server_thread (void *args)
     if (exists == 1)
     {
       strcpy(server_message, "Voted!");
+
+      vote(client_details, client_symbol);
     }
     else
     {
